@@ -161,12 +161,3 @@ app.use('/api', emailRoutes);
 - [x] Templates HTML para email
 - [x] Validações de segurança
 
-## 🎯 Próximos Passos
-
-1. Copie os arquivos para seu projeto
-2. Ajuste os imports dos models
-3. Configure as variáveis de ambiente  
-4. Personalize campos e validações
-5. Teste as rotas com Postman/Insomnia
-
-Está tudo pronto para usar! 🚀
