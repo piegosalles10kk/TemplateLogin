@@ -59,7 +59,7 @@ As rotas estão organizadas em:
 
 ### 3. Middleware
 
-O middleware `checkToken` é **idêntico ao seu**, mantendo compatibilidade total.
+O middleware `checkToken` valida com base no token gerado pelo login (duração de 1h)
 
 ## 📧 Email (Opcional)
 
