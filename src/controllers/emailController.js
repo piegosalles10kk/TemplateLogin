@@ -1,10 +1,6 @@
 const nodemailer = require('nodemailer');
-const { User } = require('../models/User'); // Ajuste o path conforme necessário
+const { User } = require('../models/model');
 
-/**
- * Generic Email Controller Template - Versão Simplificada
- * Para integrar com a recuperação de senha
- */
 
 // Função para gerar código (igual à sua)
 const gerarCodigo = (length = 6) => {
@@ -20,7 +16,7 @@ const gerarCodigo = (length = 6) => {
 // Configurar transporter (configure suas variáveis de ambiente)
 const createTransporter = () => {
     return nodemailer.createTransporter({
-        service: 'gmail', // ou seu provedor
+        service: 'gmail',
         port: 587,
         secure: false,
         auth: {
@@ -31,7 +27,7 @@ const createTransporter = () => {
 };
 
 // Template HTML simples para email
-const getEmailTemplate = (codigo, appName = 'Sua App') => {
+const getEmailTemplate = (codigo, appName = 'Template') => {
     return `
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -109,7 +105,7 @@ const sendEmail = async (req, res) => {
     
     try {
         // Buscar usuário
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email_usuario });
         if (!user) {
             return res.status(404).json({ msg: 'Email não encontrado' });
         }
@@ -147,7 +143,7 @@ const verificarCodigo = async (req, res) => {
     const { email, codigo } = req.params;
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email_usuario });
         if (!user) {
             return res.status(404).json({ msg: 'Email não encontrado' });
         }

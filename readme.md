@@ -6,13 +6,13 @@
 src/
 ├── controllers/
 │   ├── userController.js
-│   └── emailController.js (opcional)
+│   └── emailController.js
 ├── middleware/
 │   └── checkToken.js
 ├── routes/
 │   ├── userRoutes.js
 └── models/
-    └── User.js (seu schema)
+    └── model.js
 ```
 
 ## 🔧 Variáveis de Ambiente
