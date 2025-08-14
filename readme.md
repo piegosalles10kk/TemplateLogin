@@ -1,4 +1,4 @@
-# Templates Genéricos - Guia de Configuração
+# Templates Genéricos de Login
 
 ## 📁 Estrutura de Arquivos
 
