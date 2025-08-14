@@ -139,7 +139,7 @@ const userSchema = new mongoose.Schema({
 
 ## 🔗 Integração no App
 
-No seu `app.js` ou `server.js`:
+No seu `app.js`:
 
 ```javascript
 const userRoutes = require('./src/routes/userRoutes');
