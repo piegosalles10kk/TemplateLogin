@@ -1,7 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const { User } = require('../models/model');
-const {secret} = require('../utils/secret');
+const { secret } = require('../utils/secret');
 
 
 // ==========================================
@@ -72,33 +73,26 @@ const deleteUser = async (req, res) => {
 
 // Criar usuário
 const createUser = async (req, res) => {
-    //console.log('Conteúdo de req.body:', req.body);
+    const { 
+        nome_usuario,
+        email_usuario, 
+        telefone_usuario,
+        data_nascimento_usuario,
+        cargo_usuario,
+        acessos_usuario,
+        senha_usuario, 
+        confirmarSenha 
+    } = req.body;
 
-    const {  
-            nome_usuario,
-            email_usuario, 
-            telefone_usuario,
-            data_nascimento_usuario,
-            cargo_usuario,
-            acessos_usuario,
-            senha_usuario, 
-            confirmarSenha 
-        } = req.body;
+    // ✅ Correção: Validação de senhas mais clara
+    if (senha_usuario !== confirmarSenha) {
+        return res.status(422).json({ message: 'Senhas não conferem!' });
+    }
 
-
-    // Validações básicas
-    const missingFields = [];
-    if (!nome_usuario) missingFields.push('nome_usuario');
-    if (!email_usuario) missingFields.push('email_usuario');
-    if (!telefone_usuario) missingFields.push('telefone_usuario');
-    if (!data_nascimento_usuario) missingFields.push('data_nascimento_usuario');
-    if (!cargo_usuario) missingFields.push('cargo_usuario');
-    if (!acessos_usuario) missingFields.push('acessos_usuario');
-    if (!senha_usuario) missingFields.push('senha_usuario');
-    if (senha_usuario !== confirmarSenha) missingFields.push('Senhas não conferem');
-
-    if (missingFields.length > 0) {
-        return res.status(422).json({ message: `Campos obrigatórios: ${missingFields.join(', ')}` });
+    // ✅ Correção: Validação de campos obrigatórios mais clara
+    const requiredFields = [nome_usuario, email_usuario, telefone_usuario, data_nascimento_usuario, cargo_usuario, acessos_usuario, senha_usuario];
+    if (requiredFields.some(field => !field)) {
+        return res.status(422).json({ message: 'Todos os campos são obrigatórios!' });
     }
 
     try {
@@ -111,9 +105,7 @@ const createUser = async (req, res) => {
         // Hash da senha
         const salt = await bcrypt.genSalt(12);
         const passwordHash = await bcrypt.hash(senha_usuario, salt);
-        console.log(`Senha gerada: ${passwordHash}`);
         
-
         // Criar usuário
         const user = new User({
             nome_usuario,
@@ -124,13 +116,11 @@ const createUser = async (req, res) => {
             acessos_usuario,
             senha_usuario: passwordHash,
         });
-        //console.log(user);
-        
 
         await user.save();
         res.status(201).json({ msg: 'Usuário criado com sucesso' });
     } catch (error) {
-        console.log('Erro ao criar usuário:', error);       
+        console.log('Erro ao criar usuário:', error); 
         res.status(500).json({ msg: 'Erro ao criar usuário' });
     }
 };
@@ -140,7 +130,7 @@ const loginUser = async (req, res) => {
     const { email_usuario, senha_usuario } = req.body;
 
     if (!email_usuario || !senha_usuario) {
-        return res.status(422).json({ message: 'email e senha são obrigatórios!' });
+        return res.status(422).json({ message: 'Email e senha são obrigatórios!' });
     }
 
     try {
@@ -154,9 +144,9 @@ const loginUser = async (req, res) => {
             return res.status(422).json({ message: 'Senha inválida!' });
         }
 
-        const secret = "PiNdAmOnHangaba";
+        // ✅ Correção: Usando a variável 'secret' importada
         const token = jwt.sign({ id: user._id }, secret, {
-        expiresIn: '1d'
+            expiresIn: '1d'
         });
 
         res.status(200).json({
@@ -174,6 +164,89 @@ const loginUser = async (req, res) => {
 // RECUPERAÇÃO DE SENHA
 // ==========================================
 
+// Configurar transporte Nodemailer
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    auth: {
+        user: 'chamadoschromatox@gmail.com', 
+        pass: 'glsdpiqtmubibzzf', 
+    },
+});
+
+// Template HTML simples para email
+const getEmailTemplate = (codigo, appName = 'Template') => {
+    return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${appName} - Recuperar Senha</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+            }
+            .container {
+                width: 100%;
+                padding: 20px;
+                background-color: #ffffff;
+            }
+            .header {
+                text-align: center;
+                padding: 20px;
+                background-color: #007bff;
+                color: white;
+            }
+            .content {
+                padding: 20px;
+            }
+            .footer {
+                text-align: center;
+                padding: 10px;
+                background-color: #dddddd;
+                font-size: 12px;
+                color: #555555;
+            }
+            .code {
+                font-size: 24px;
+                font-weight: bold;
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                text-align: center;
+                margin: 20px 0;
+                letter-spacing: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>${appName}</h1>
+                <h2>Recuperar Senha</h2>
+            </div>
+            <div class="content">
+                <p>Olá,</p>
+                <p>Foi solicitada uma recuperação de senha para sua conta.</p>
+                <p><strong>Caso não tenha sido você, ignore este email.</strong></p>
+                <p>Código de acesso:</p>
+                <div class="code">${codigo}</div>
+                <p>Este código expira em 15 minutos.</p>
+                <p>Atenciosamente,<br>Equipe ${appName}</p>
+            </div>
+            <div class="footer">
+                <p>© ${new Date().getFullYear()} ${appName}. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+};
+
 // Função para gerar código
 const gerarCodigo = (length = 6) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -185,43 +258,54 @@ const gerarCodigo = (length = 6) => {
     return codigo;
 };
 
-// Enviar código de recuperação (sem email - apenas gerar código)
+// No seu arquivo userControllers.js
 const sendRecoveryCode = async (req, res) => {
-    const email = req.params.email;
+    // ✅ CORREÇÃO: Pega o parâmetro 'email' da rota
+    const { email } = req.params;
     
+    if (!email) {
+        return res.status(400).json({ msg: 'Email é obrigatório e deve ser passado na URL.' });
+    }
+
     try {
-        const user = await User.findOne({ email });
+        // ✅ CORREÇÃO: Usa 'email' para buscar no banco de dados
+        const user = await User.findOne({ email_usuario: email });
+        
         if (!user) {
             return res.status(404).json({ msg: 'Email não encontrado' });
         }
-
-        const codigo = gerarCodigo(6);
         
-        // Salvar código no usuário
-        user.codigoRecuperarSenha = codigo;
+        // ... o restante do código segue inalterado
+        const testeCodigo = gerarCodigo(6);
+        user.codigoRecuperarSenha = testeCodigo;
         await user.save();
-
-        // Aqui você implementaria o envio do email
-        // Por enquanto, apenas retorna sucesso
-        console.log(`Código de recuperação para ${email}: ${codigo}`);
         
-        res.status(200).json({ msg: 'Código enviado com sucesso!' });
+        const mailOptions = {
+            from: `Sua App <chamadoschromatox@gmail.com>`,
+            to: user.email_usuario,
+            subject: 'Recuperar Senha',
+            html: getEmailTemplate(testeCodigo, 'Sua App'),
+            text: `Código de recuperação: ${testeCodigo}`
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ msg: 'Email enviado com sucesso!' });
+        
     } catch (error) {
-        console.log('Erro ao enviar código:', error);
-        res.status(500).json({ msg: 'Erro ao enviar código' });
+        console.log('Erro ao enviar email:', error);
+        res.status(500).json({ msg: 'Erro ao enviar email' });
     }
 };
 
 // Verificar código de recuperação
 const verificarCodigo = async (req, res) => {
     const { email, codigo } = req.params;
-
+    
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email_usuario: email });
         if (!user) {
             return res.status(404).json({ msg: 'Email não encontrado' });
         }
-
         if (user.codigoRecuperarSenha === codigo) {
             return res.status(200).json({ 
                 msg: 'Código verificado com sucesso!', 
@@ -238,29 +322,28 @@ const verificarCodigo = async (req, res) => {
 
 // Atualizar senha via recuperação
 const updatePasswordRecovery = async (req, res) => {
-    const { email, codigoRecuperarSenha, senha, confirmarSenha } = req.body;
+    const { email_usuario, codigoRecuperarSenha, senha_usuario, confirmarSenha } = req.body;
 
-    if (!senha || senha !== confirmarSenha) {
+    if (!senha_usuario || senha_usuario !== confirmarSenha) {
         return res.status(422).json({ msg: 'Senhas não conferem!' });
     }
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email_usuario });
         if (!user) {
             return res.status(404).json({ msg: 'Usuário não encontrado' });
         }
-
         if (user.codigoRecuperarSenha !== codigoRecuperarSenha) {
             return res.status(400).json({ msg: 'Código incorreto' });
         }
 
         const salt = await bcrypt.genSalt(12);
-        const passwordHash = await bcrypt.hash(senha, salt);
+        const passwordHash = await bcrypt.hash(senha_usuario, salt);
 
-        user.senha = passwordHash;
+        // ✅ Correção: Usando o campo correto do modelo 'senha_usuario'
+        user.senha_usuario = passwordHash;
         user.codigoRecuperarSenha = undefined;
         await user.save();
-
         res.status(200).json({ msg: 'Senha atualizada com sucesso!' });
     } catch (error) {
         console.log('Erro ao atualizar senha:', error);

@@ -13,18 +13,15 @@ const gerarCodigo = (length = 6) => {
     return codigo;
 };
 
-// Configurar transporter (configure suas variáveis de ambiente)
-const createTransporter = () => {
-    return nodemailer.createTransporter({
-        service: 'gmail',
-        port: 587,
-        secure: false,
-        auth: {
-            user: process.env.EMAIL_USER, // seu email
-            pass: process.env.EMAIL_PASS  // sua senha de app
-        }
-    });
-};
+// Configurar transporte Nodemailer para Gmail
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    auth: {
+        user: 'chamadoschromatox@gmail.com', 
+        pass: 'glsdpiqtmubibzzf', 
+    },
+});
 
 // Template HTML simples para email
 const getEmailTemplate = (codigo, appName = 'Template') => {
@@ -99,6 +96,7 @@ const getEmailTemplate = (codigo, appName = 'Template') => {
     `;
 };
 
+
 // Enviar email de recuperação
 const sendEmail = async (req, res) => {
     const email = req.params.email;
@@ -118,7 +116,7 @@ const sendEmail = async (req, res) => {
         await user.save();
 
         // Configurar email
-        const transport = createTransporter();
+        const transport = transporter();
         
         const mailOptions = {
             from: `Sua App <${process.env.EMAIL_USER}>`,
