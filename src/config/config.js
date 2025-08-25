@@ -1,9 +1,7 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
-    const dbUser = process.env.DB_USER;
-    const dbPassword = process.env.DB_PASS;
-    const dbURI = `mongodb://localhost:27017/LoginTeste`;
+    const dbURI = `mongodb://mongodb:27017/LoginTeste`;
 
     try {
         await mongoose.connect(dbURI);

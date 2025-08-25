@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
     telefone_usuario: { type: Number, required: true },
     data_nascimento_usuario: { type: Date, required: true },
     cargo_usuario: { type: String, required: true},
-    acessos_usuario: { type: Array, required: true },    
+    acessos_usuario: { type: Array, required: false },    
 
     senha_usuario : { type: String, required: true },
     codigoRecuperarSenha: { type: String, required: false },
